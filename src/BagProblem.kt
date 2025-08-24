@@ -1,13 +1,13 @@
 class BagProblem {
-    // Solução Gulosa (não ótima para mochila 0/1, mas rápida)
+    // Solução Gulosa (rápida, mas não garante ótimo para mochila 0/1)
     fun greedySolution(capacity: Int, weights: IntArray, values: IntArray): Pair<Int, IntArray> {
         val n = weights.size
         val selected = IntArray(n)
         var remainingCapacity = capacity
         var totalValue = 0
 
-        // Ordena os itens por valor (decrescente) e, em caso de empate, por peso (crescente)
-        val items = indices.sortedByDescending { i -> values[i] }.thenBy { i -> weights[i] }
+        // Ordena os itens pela razão valor/peso (decrescente)
+        val items = (0 until n).sortedByDescending { i -> values[i].toDouble() / weights[i] }
 
         for (i in items) {
             if (weights[i] <= remainingCapacity) {
@@ -29,10 +29,13 @@ class BagProblem {
         // Preenche a tabela DP
         for (i in 1..n) {
             for (w in 1..capacity) {
-                if (weights[i-1] <= w) {
-                    dp[i][w] = maxOf(dp[i-1][w], dp[i-1][w - weights[i-1]] + values[i-1])
+                if (weights[i - 1] <= w) {
+                    dp[i][w] = maxOf(
+                        dp[i - 1][w],
+                        dp[i - 1][w - weights[i - 1]] + values[i - 1]
+                    )
                 } else {
-                    dp[i][w] = dp[i-1][w]
+                    dp[i][w] = dp[i - 1][w]
                 }
             }
         }
@@ -40,9 +43,9 @@ class BagProblem {
         // Recupera os itens selecionados
         var w = capacity
         for (i in n downTo 1) {
-            if (dp[i][w] != dp[i-1][w]) {
-                selected[i-1] = 1
-                w -= weights[i-1]
+            if (dp[i][w] != dp[i - 1][w]) {
+                selected[i - 1] = 1
+                w -= weights[i - 1]
             }
         }
 
@@ -59,16 +62,17 @@ fun main() {
     println("Itens: ${(1..weights.size).joinToString()}")
     println("Pesos: ${weights.joinToString()}")
     println("Valores: ${values.joinToString()}")
+    println("Capacidade da mochila: $capacity")
 
     // Solução Gulosa
     val (greedyValue, greedySelected) = problem.greedySolution(capacity, weights, values)
     println("\n--- Solução Gulosa ---")
     println("Valor total: $greedyValue")
-    println("Itens selecionados: ${greedySelected.joinToString()}")
+    println("Itens selecionados: ${greedySelected.withIndex().filter { it.value == 1 }.map { it.index + 1 }}")
 
     // Solução por Programação Dinâmica (Ótima)
     val (dpValue, dpSelected) = problem.dpSolution(capacity, weights, values)
     println("\n--- Solução DP (Ótima) ---")
     println("Valor total: $dpValue")
-    println("Itens selecionados: ${dpSelected.joinToString()}")
+    println("Itens selecionados: ${dpSelected.withIndex().filter { it.value == 1 }.map { it.index + 1 }}")
 }
